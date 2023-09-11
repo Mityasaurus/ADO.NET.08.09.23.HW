@@ -1,4 +1,5 @@
-﻿using System.Configuration;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics.Metrics;
@@ -39,6 +40,17 @@ namespace _08._09._23.HW
                         Console.WriteLine("9 - Показати усi столицi, якi починаються на певну букву");
                         Console.WriteLine("10 - Показати усi країни, площа яких зазначена у вказаному дiапазонi");
                         Console.WriteLine("11 - Показати назви усiх країн з населенням, бiльшим нiж задане");
+                        Console.WriteLine();
+                        Console.WriteLine("12 - Показати топ-5 країн за площею");
+                        Console.WriteLine("13 - Показати топ-5 столиць за кiлькiстю жителiв");
+                        Console.WriteLine("14 - Показати країну з найбiльшою площею");
+                        Console.WriteLine("15 - Показати столицю з найбiльшою кiлькiстю жителiв");
+                        Console.WriteLine("16 - Показати країну з найменшою площею Європi");
+                        Console.WriteLine("17 - Показати середню площу країн в Європi");
+                        Console.WriteLine("18 - Показати топ-3 мiст за кiлькiстю мешканцiв для певної країни");
+                        Console.WriteLine("19 - Показати загальну кiлькiсть країн");
+                        Console.WriteLine("20 - Показати частину свiту з максимальною кiлькiстю країн");
+                        Console.WriteLine("21 - Показати кiлькiсть країн у кожнiй частинi свiту");
                         Console.WriteLine();
                         Console.WriteLine("0 - Вихiд");
 
@@ -129,6 +141,50 @@ namespace _08._09._23.HW
                                     Display(GetCountriesPopulationBiggerThan(population11Case));
                                 }
                                 break;
+                            case 12:
+                                Console.Clear();
+                                Display(GetTopCountriesByArea(5));
+                                break;
+                            case 13:
+                                Console.Clear();
+                                Display(GetTopCapitalsByPopulation(5));
+                                break;
+                            case 14:
+                                Console.Clear();
+                                Display(GetTopCountriesByArea(1));
+                                break;
+                            case 15:
+                                Console.Clear();
+                                Display(GetTopCapitalsByPopulation(1));
+                                break;
+                            case 16:
+                                Console.Clear();
+                                Display(GetBottomCountriesByAreaIn(1, HW.Regions.Europe));
+                                break;
+                            case 17:
+                                Console.Clear();
+                                Display(GetAverageCountriesAreaIn(HW.Regions.Europe));
+                                break;
+                            case 18:
+                                Console.Clear();
+                                Console.WriteLine("Введiть назву бажаної країни");
+
+                                string country = Console.ReadLine();
+
+                                Display(GetTopCitiesByPopulationInCountry(country, 3));
+                                break;
+                            case 19:
+                                Console.Clear();
+                                Display(GetCountriesNumber());
+                                break;
+                            case 20:
+                                Console.Clear();
+                                Display(GetRegionTheMostCountries());
+                                break;
+                            case 21:
+                                Console.Clear();
+                                Display(GetCountriesNumberEachRegion());
+                                break;
                             case 0:
                                 break;
                             default:
@@ -208,7 +264,7 @@ namespace _08._09._23.HW
             }
             return dict;
         }
-        private static Dictionary<string, List<string>> GetDictionaryWith(Dictionary<string, List<string>> dict, string columnName, List<string> value)
+        private static Dictionary<string, List<string>> GetDictionaryWith(Dictionary<string, List<string>> dict, string columnName, List<string> values)
         {
             var result = new Dictionary<string, List<string>>();
             try
@@ -217,7 +273,7 @@ namespace _08._09._23.HW
 
                 for (int i = 0; i < dict["ID"].Count; i++)
                 {
-                    if (value.Contains(dict[columnName][i]))
+                    if (values.Contains(dict[columnName][i]))
                     {
                         dict.Keys.ToList().ForEach(key => result[key].Add(dict[key][i]));
                     }
@@ -273,7 +329,7 @@ namespace _08._09._23.HW
             .Select(countryInfo => countryInfo.ID)
             .ToList();
 
-            return GetDictionaryWith(GetDictionaryWith(MajorCities, "CountryID", id), "CityName");
+            return GetDictionaryWith(MajorCities, "CountryID", id);
         }
         private static Dictionary<string, List<string>> GetCapitalsMore5MilPopulation()
         {
@@ -343,6 +399,169 @@ namespace _08._09._23.HW
             .ToList();
 
             return GetDictionaryWith(Countries, "ID", id);
+        }
+        private static Dictionary<string, List<string>> GetTopCountriesByArea(int count)
+        {
+            if(count <= 0)
+            {
+                count = 1;
+            }
+
+            var id = Countries["Area"]
+                     .Select((area, index) => new { Area = int.Parse(area), ID = Countries["ID"][index] })
+                     .OrderByDescending(info => info.Area)
+                     .Select(info => info.ID)
+                     .Take(count)
+                     .ToList();
+
+            return GetDictionaryWith(Countries, "ID", id);
+        }
+        private static Dictionary<string, List<string>> GetTopCapitalsByPopulation(int count)
+        {
+            if(count <= 0)
+            {
+                count = 1;
+            }
+
+            var id = Capitals["Population"]
+                     .Select((population, index) => new { Population = int.Parse(population), ID = Capitals["ID"][index] })
+                     .OrderByDescending(info => info.Population)
+                     .Select(info => info.ID)
+                     .Take(count)
+                     .ToList();
+
+            return GetDictionaryWith(Capitals, "ID", id);
+        }
+        private static Dictionary<string, List<string>> GetBottomCountriesByAreaIn(int count, Regions region)
+        {
+            if (count <= 0)
+            {
+                count = 1;
+            }
+
+            int regionID = GetRegionID(region);
+
+            var id = Countries["Area"]
+                     .Select((area, index) => new { Area = int.Parse(area), ID = Countries["ID"][index], RegionID = int.Parse(Countries["RegionID"][index]) })
+                     .Where(info => info.RegionID == regionID)
+                     .OrderBy(info => info.Area)
+                     .Select(info => info.ID)
+                     .Take(count)
+                     .ToList();
+
+            return GetDictionaryWith(Countries, "ID", id);
+        }
+        private static Dictionary<string, List<string>> GetAverageCountriesAreaIn(Regions region)
+        {
+            int regionID = GetRegionID(region);
+
+            var averageArea = Countries["Area"]
+                     .Select((area, index) => new { Area = int.Parse(area), ID = Countries["ID"][index], RegionID = int.Parse(Countries["RegionID"][index]) })
+                     .Where(info => info.RegionID == regionID)
+                     .Average(info => info.Area);
+
+            var res = new Dictionary<string, List<string>>
+            {
+                { "Average area", new List<string>() }
+            };
+
+            res["Average area"].Add(averageArea.ToString());
+
+            return res;
+        }
+        private static Dictionary<string, List<string>> GetTopCitiesByPopulationInCountry(string country, int count)
+        {
+            if (count <= 0)
+            {
+                count = 1;
+            }
+
+            var countryID = GetCountryID(country);
+
+            var id = MajorCities["Population"]
+                     .Select((population, index) => new { Population = int.Parse(population), ID = MajorCities["ID"][index], CountryID = int.Parse(MajorCities["CountryID"][index]) })
+                     .Where(info => info.CountryID == countryID)
+                     .OrderByDescending(info => info.Population)
+                     .Select(info => info.ID)
+                     .Take(count)
+                     .ToList();
+
+            return GetDictionaryWith(MajorCities, "ID", id);
+        }
+        private static Dictionary<string, List<string>> GetCountriesNumber()
+        {
+            var res = new Dictionary<string, List<string>>
+            {
+                { "Number of countries", new List<string>() }
+            };
+
+            int count = Countries["ID"].Count;
+
+            res["Number of countries"].Add(count.ToString());
+
+            return res;
+        }
+        private static Dictionary<string, List<string>> GetRegionTheMostCountries()
+        {
+            var id = Countries["RegionID"]
+                     .GroupBy(id => id)
+                     .Select(info => new { RegionID = info.Key, Count = info.Count() })
+                     .OrderByDescending(info => info.Count)
+                     .Select(info => info.RegionID)
+                     .Take(1)
+                     .ToList();
+
+            return GetDictionaryWith(Regions, "ID", id);
+        }
+        private static Dictionary<string, List<string>> GetCountriesNumberEachRegion()
+        {
+            var res = new Dictionary<string, List<string>>
+            {
+                { "Region name", new List<string>() },
+                { "Number of countries", new List<string>() }
+            };
+
+            var info = Countries["RegionID"]
+                     .GroupBy(id => id)
+                     .Select(info => new { RegionID = info.Key, Count = info.Count() })
+                     .OrderByDescending(info => info.Count)
+                     .ToList();
+
+            res["Number of countries"] = info.Select(info => info.Count.ToString()).ToList();
+
+            var regionsID = info.Select(info => info.RegionID.ToString()).ToList();
+
+            var regionsNames = regionsID
+                        .Select(id => Regions["ID"]
+                        .Zip(Regions["RegionName"], (regionID, regionName) => new { ID = regionID, RegionName = regionName })
+                        .FirstOrDefault(region => region.ID == id)?.RegionName)
+                        .Where(regionName => regionName != null)
+                        .ToList();
+
+
+            res["Region name"] = regionsNames;
+
+            return res;
+        }
+        private static int GetRegionID(Regions region)
+        {
+            var regionID = Regions["RegionName"]
+                           .Select((name, index) => new { Name = name, ID = Regions["ID"][index] })
+                           .Where(info => info.Name == region.ToString())
+                           .Select(info => info.ID)
+                           .ToList()[0];
+
+            return int.Parse(regionID);
+        }
+        private static int GetCountryID(string country)
+        {
+            var countryID = Countries["CountryName"]
+                           .Select((name, index) => new { Name = name, ID = Countries["ID"][index] })
+                           .Where(info => info.Name == country)
+                           .Select(info => info.ID)
+                           .ToList()[0];
+
+            return int.Parse(countryID);
         }
     }
 }

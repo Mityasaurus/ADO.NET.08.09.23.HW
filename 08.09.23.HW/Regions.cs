@@ -8,7 +8,6 @@ namespace _08._09._23.HW
 {
     public enum Regions
     {
-        None,
         Africa,
         Asia,
         Europe,
